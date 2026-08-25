@@ -81,16 +81,26 @@ const App = (() => {
 
   function handleLogin(e) {
     e.preventDefault();
-    const username = document.getElementById("login-username").value;
-    const password = document.getElementById("login-password").value;
     const errorEl = document.getElementById("login-error");
     const submitBtn = e.target.querySelector('button[type="submit"]');
     errorEl.style.display = "none";
 
+    let password;
+    try {
+      password = document.getElementById("login-password").value;
+    } catch (err) {
+      // Jaring keselamatan: jika struktur borang tidak sepadan dengan kod
+      // (cth. campuran fail lama/baharu semasa upload), papar ralat jelas
+      // berbanding senyap terus tanpa apa-apa berlaku.
+      errorEl.textContent = "Ralat borang log masuk: " + err.message + " — sila muat semula halaman (Ctrl+Shift+R) atau semak fail js/app.js dan index.html sepadan.";
+      errorEl.style.display = "block";
+      return;
+    }
+
     submitBtn.disabled = true;
     submitBtn.innerHTML = `<div class="spinner"></div> Mengesahkan...`;
 
-    Auth.login(username, password)
+    Auth.login(password)
       .then((user) => showShell(user))
       .catch((err) => {
         errorEl.textContent = err.message;
@@ -287,3 +297,31 @@ const UI = (() => {
 })();
 
 document.addEventListener("DOMContentLoaded", App.init);
+
+// =========================================================
+// Pengesan ralat global — papar sebarang ralat JavaScript yang
+// tidak ditangkap terus pada skrin (bukan hanya dalam console),
+// supaya masalah seperti fail lama/baharu tidak sepadan dapat
+// dikesan dengan pantas tanpa perlu membuka DevTools.
+// =========================================================
+window.addEventListener("error", (e) => {
+  showGlobalErrorBanner_(e.message);
+});
+window.addEventListener("unhandledrejection", (e) => {
+  showGlobalErrorBanner_((e.reason && e.reason.message) || String(e.reason));
+});
+
+function showGlobalErrorBanner_(message) {
+  let banner = document.getElementById("global-error-banner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "global-error-banner";
+    banner.style.cssText = `
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: #c23b3b; color: #fff; font-size: 13px;
+      padding: 10px 16px; text-align: center; font-family: sans-serif;
+    `;
+    document.body.appendChild(banner);
+  }
+  banner.textContent = "⚠ Ralat sistem: " + message + " — sila muat semula halaman (Ctrl+Shift+R). Jika berterusan, hantar mesej ini kepada pembangun.";
+}
