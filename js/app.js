@@ -134,6 +134,25 @@ const App = (() => {
 
     renderSidebarNav(user.role);
     navigateTo(currentModule);
+    showDummyModeBanner_();
+  }
+
+  // Penanda jelas bila sistem masih guna data contoh (belum sambung Google
+  // Sheets sebenar) — supaya perubahan seperti "Tambah Unit" yang kelihatan
+  // berjaya tetapi sebenarnya hanya tersimpan sementara dalam pelayar tidak
+  // mengelirukan (akan hilang bila muat semula halaman).
+  function showDummyModeBanner_() {
+    if (!CONFIG.USE_DUMMY_DATA) return;
+    if (document.getElementById("dummy-mode-banner")) return;
+    const banner = document.createElement("div");
+    banner.id = "dummy-mode-banner";
+    banner.style.cssText = `
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9998;
+      background: #c99a3a; color: #2b2005; font-size: 12.5px; font-weight: 600;
+      padding: 8px 16px; text-align: center; font-family: sans-serif;
+    `;
+    banner.textContent = "⚠ Mod Data Contoh (Demo) aktif — sebarang perubahan (tambah/edit/padam) TIDAK disimpan ke Google Sheets dan akan hilang bila halaman dimuat semula. Tukar USE_DUMMY_DATA kepada false dalam config/config.js untuk guna data sebenar.";
+    document.body.appendChild(banner);
   }
 
   function roleLabel(role) {

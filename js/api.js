@@ -271,18 +271,31 @@ const Api = (() => {
 
       // ---- Unit ----
       case "saveUnit": {
+        const teacherIds = Array.isArray(payload.teacher_ids) ? payload.teacher_ids.filter(Boolean) : [];
+        const teacherNames = teacherIds.map((id) => (DUMMY.teachers.find((t) => t.teacher_id === id) || {}).name).filter(Boolean);
+        const resolved = {
+          unit_name: payload.unit_name,
+          category: payload.category,
+          teacher_ids: teacherIds,
+          teacher: teacherNames.join(", ")
+        };
         if (payload.unit_id) {
-          Object.assign(DUMMY.units.find((u) => u.unit_id === payload.unit_id) || {}, payload);
+          Object.assign(DUMMY.units.find((u) => u.unit_id === payload.unit_id) || {}, resolved);
           return { unit_id: payload.unit_id };
         }
         const id = nextDummyId_(DUMMY.units, "unit_id", "U");
-        const obj = { unit_id: id, members: 0, activities: 0, attendance: 0, ...payload };
+        const obj = { unit_id: id, members: 0, activities: 0, attendance: 0, ...resolved };
         DUMMY.units.push(obj);
         return obj;
       }
       case "deleteUnit":
         DUMMY.units = DUMMY.units.filter((u) => u.unit_id !== payload.unit_id);
         return { deleted: true };
+      case "deleteAllUnits": {
+        const count = DUMMY.units.length;
+        DUMMY.units = [];
+        return { deleted_count: count };
+      }
       case "setStudentUnits": {
         DUMMY.members = (DUMMY.members || []).filter((m) => m.student_id !== payload.student_id);
         (payload.unit_ids || []).forEach((unitId) => {
@@ -372,6 +385,7 @@ const Api = (() => {
     setStudentUnits: (studentId, unitIds) => request("setStudentUnits", { student_id: studentId, unit_ids: unitIds }, "POST"),
     saveUnit: (data) => request("saveUnit", data, "POST"),
     deleteUnit: (data) => request("deleteUnit", data, "POST"),
+    deleteAllUnits: () => request("deleteAllUnits", {}, "POST"),
     saveAttendance: (data) => request("saveAttendance", data, "POST"),
     saveERPH: (data) => request("saveERPH", data, "POST"),
     deleteErph: (data) => request("deleteERPH", data, "POST"),

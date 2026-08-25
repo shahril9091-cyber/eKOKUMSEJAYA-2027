@@ -31,6 +31,7 @@ const Units = (() => {
         <div class="filter-field"><label>Kategori</label>
           <select class="input" id="unit-filter-category"><option value="">Semua Kategori</option>${CONFIG.CATEGORIES.map((c) => `<option value="${c.id}">${c.label}</option>`).join("")}</select>
         </div>
+        <button class="btn btn-outline" id="unit-delete-all" style="color:var(--danger-600); border-color:var(--danger-100);"><i class="fa-solid fa-trash-can"></i> Padam Semua</button>
         <button class="btn btn-primary" id="unit-new"><i class="fa-solid fa-plus"></i> Tambah Unit</button>
       </div>
       <div class="card">
@@ -44,9 +45,32 @@ const Units = (() => {
       </div>
     `;
     document.getElementById("unit-new").addEventListener("click", () => openForm());
+    document.getElementById("unit-delete-all").addEventListener("click", handleDeleteAll);
     document.getElementById("unit-search").addEventListener("input", renderRows);
     document.getElementById("unit-filter-category").addEventListener("change", renderRows);
     renderRows();
+  }
+
+  function handleDeleteAll() {
+    if (!units.length) {
+      UI.toast("Tiada unit untuk dipadam.", "error");
+      return;
+    }
+    UI.confirmDialog({
+      title: "Padam SEMUA Unit/Kelab/Sukan",
+      message: `Adakah anda PASTI mahu memadam SEMUA ${units.length} unit/kelab/sukan? Keahlian murid dalam unit-unit ini turut terjejas. Tindakan ini tidak boleh dibuat asal.`,
+      confirmLabel: "Ya, Padam Semua",
+      onConfirm: async () => {
+        try {
+          const result = await Api.deleteAllUnits();
+          UI.toast(`${result.deleted_count} unit berjaya dipadam.`, "success");
+          loaded = false;
+          render();
+        } catch (err) {
+          UI.toast("Gagal memadam semua unit: " + err.message, "error");
+        }
+      }
+    });
   }
 
   function renderRows() {
@@ -61,9 +85,9 @@ const Units = (() => {
       <tr>
         <td>${u.unit_name}</td>
         <td><span class="badge badge-${catTone[u.category]}">${catLabel[u.category]}</span></td>
-        <td>${u.teacher}</td>
-        <td>${u.members}</td>
-        <td>${u.attendance}%</td>
+        <td>${u.teacher || "-"}</td>
+        <td>${u.members || 0}</td>
+        <td>${u.attendance || 0}%</td>
         <td class="row-actions">
           <button class="btn btn-icon btn-outline" data-id="${u.unit_id}" data-act="edit"><i class="fa-solid fa-pen"></i></button>
           <button class="btn btn-icon btn-danger" data-id="${u.unit_id}" data-act="delete"><i class="fa-solid fa-trash"></i></button>
