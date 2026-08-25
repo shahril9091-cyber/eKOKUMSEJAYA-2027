@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Pengurusan Kokurikulum — SK Seri Jaya</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/forms.css">
+<link rel="stylesheet" href="css/responsive.css">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<!-- =========================================================
+     LOGIN SCREEN
+     ========================================================= -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <img src="https://i.postimg.cc/DZkdW8qn/Logo-SK-Seri-Jaya-Transparent.png" alt="Logo Sekolah" class="login-logo">
+    <div class="login-school" id="login-school-name">SK SERI JAYA</div>
+    <div class="login-system" id="login-system-name">Sistem Pengurusan Kokurikulum</div>
+
+    <form id="login-form">
+      <div class="form-field">
+        <label>Kata Laluan</label>
+        <input type="password" class="input" id="login-password" placeholder="Masukkan kata laluan" autocomplete="current-password" required autofocus>
+      </div>
+      <div id="login-error" class="login-error" style="display:none;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:11px;">Log Masuk</button>
+    </form>
+
+    <div class="login-hint">
+      Gunakan kata laluan yang ditetapkan oleh sekolah.
+      Kata laluan boleh diubah oleh Superadmin melalui Tab Tetapan selepas log masuk.
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     APP SHELL
+     ========================================================= -->
+<div id="app-shell" class="app-shell" style="display:none;">
+
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="https://i.postimg.cc/DZkdW8qn/Logo-SK-Seri-Jaya-Transparent.png" alt="Logo">
+      <div class="sidebar-brand-text">
+        <div class="name" id="cfg-school-name">SK SERI JAYA</div>
+        <div class="motto" id="cfg-school-motto">BERILMU • BERTAQWA • ISTIQAMAH</div>
+      </div>
+    </div>
+
+    <div class="sidebar-nav" id="sidebar-nav"></div>
+
+    <div class="sidebar-footer">
+      Sistem Pengurusan Kokurikulum<br>v1.0
+      <div class="sidebar-credit">Mohd Shahril | SK Seri Jaya | Terengganu</div>
+    </div>
+  </aside>
+
+  <div class="main-column">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn" id="mobile-menu-btn" style="display:none;"><i class="fa-solid fa-bars"></i></button>
+        <button class="icon-btn" id="sidebar-toggle"><i class="fa-solid fa-bars-staggered"></i></button>
+        <div>
+          <div class="page-title" id="page-title">Dashboard</div>
+          <div class="page-crumb" id="page-crumb"></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-datetime" id="topbar-datetime">
+          <div class="td-date" id="td-date">—</div>
+          <div class="td-time" id="td-time">—</div>
+        </div>
+        <button class="icon-btn" title="Log keluar" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i></button>
+        <div class="user-chip">
+          <div class="avatar" id="user-avatar">--</div>
+          <div>
+            <div style="font-size:12.5px; font-weight:600;" id="user-name">—</div>
+            <div class="role" id="user-role">—</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content-area">
+
+      <!-- Dashboard -->
+      <section class="module is-active" id="module-dashboard">
+        <h2 id="cfg-system-subtitle-holder" style="display:none;"></h2>
+      </section>
+
+      <!-- Kehadiran Murid -->
+      <section class="module" id="module-attendance"></section>
+
+      <!-- eRPH Kokurikulum -->
+      <section class="module" id="module-erph"></section>
+
+      <!-- Laporan Aktiviti -->
+      <section class="module" id="module-reports"></section>
+
+      <!-- Laporan Keseluruhan -->
+      <section class="module" id="module-summary"></section>
+
+      <!-- Tetapan (termasuk Tab Superadmin: Murid, Guru, Unit/Kelab/Sukan, Kata Laluan) -->
+      <section class="module" id="module-settings"></section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Hidden holders used to inject CONFIG values without over-templating HTML -->
+<span id="cfg-system-name" style="display:none;"></span>
+<span id="cfg-system-subtitle" style="display:none;"></span>
+
+<!-- =========================================================
+     Shared components: modal + toast
+     ========================================================= -->
+<div class="modal-overlay" id="modal-overlay"></div>
+<div class="toast-stack" id="toast-stack"></div>
+
+<!-- =========================================================
+     Scripts
+     ========================================================= -->
+<script src="config/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/pdf.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/attendance.js"></script>
+<script src="js/erph.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/students.js"></script>
+<script src="js/units.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+  // Mobile menu button hanya perlu wujud pada skrin kecil
+  function toggleMobileBtn() {
+    document.getElementById("mobile-menu-btn").style.display = window.innerWidth <= 900 ? "flex" : "none";
+  }
+  window.addEventListener("resize", toggleMobileBtn);
+  toggleMobileBtn();
+</script>
+
+</body>
+</html>
