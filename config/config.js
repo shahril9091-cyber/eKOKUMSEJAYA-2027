@@ -18,7 +18,7 @@ const CONFIG = {
   // false = sistem menghubungi Apps Script API sebenar melalui API_URL di atas.
   // PENTING: jangan tukar kepada false sebelum API_URL diisi dan Web App
   // sudah di-deploy (lihat README.md, bahagian Setup Google Sheets + Apps Script).
-  USE_DUMMY_DATA: true,
+  USE_DUMMY_DATA: false,
 
   CURRENT_YEAR: 2026,
 
