@@ -1,0 +1,64 @@
+/* =========================================================
+   responsive.css — Breakpoints for tablet & mobile
+   ========================================================= */
+
+@media (max-width: 1080px) {
+  .dash-grid { grid-template-columns: 1fr; }
+  .unit-summary-grid { grid-template-columns: 1fr 1fr; }
+  .dash-two-col { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-md);
+  }
+  .sidebar.is-open { transform: translateX(0); }
+  .sidebar.is-collapsed { width: var(--sidebar-w); } /* no collapsed state on mobile */
+
+  .sidebar-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(11,31,58,0.4);
+    z-index: 25;
+  }
+  .sidebar-backdrop.is-open { display: block; }
+
+  .content-area { padding: 16px; }
+  #sidebar-toggle { display: none; } /* pada mobile, guna #mobile-menu-btn sahaja — elak 2 ikon hamburger */
+  .form-grid, .form-grid.cols-3 { grid-template-columns: 1fr; }
+  .form-grid .span-2 { grid-column: span 1; }
+  .unit-summary-grid { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+
+  .page-title { font-size: 15px; }
+  .user-chip .role { display: none; }
+  .topbar-datetime { display: none; }
+}
+
+@media (max-width: 720px) {
+  .table-wrap { display: none; }
+  .card-row-list { display: block; }
+
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-field, .filter-search { min-width: 0; }
+
+  .image-upload-grid { grid-template-columns: 1fr 1fr; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+
+  .modal { max-width: 100%; margin: 0 6px; }
+}
+
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: 1fr; }
+  .topbar { padding: 0 14px; }
+  .content-area { padding: 12px; }
+}
+
+@media print {
+  .sidebar, .topbar, .filter-bar, .row-actions, .table-footer, .toast-stack { display: none !important; }
+  .content-area { padding: 0; }
+  body { background: #fff; }
+}
