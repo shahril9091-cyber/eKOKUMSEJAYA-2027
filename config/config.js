@@ -8,7 +8,7 @@
 
 // TODO: MASUKKAN URL GOOGLE APPS SCRIPT DI SINI (selepas deployment Web App)
 const CONFIG = {
-  API_URL: "",              // Contoh: "https://script.google.com/macros/s/XXXXX/exec"
+  API_URL: "https://script.google.com/macros/s/AKfycbyFMdjfyVD1fhPTGe91vGzxwhuG344jWzjBhIwvfisCcy1E5ZDpImZat5YCTgExhItN/exec",
   SCHOOL_NAME: "SK SERI JAYA",
   SCHOOL_MOTTO: "BERILMU • BERTAQWA • ISTIQAMAH",
   SYSTEM_NAME: "SISTEM PENGURUSAN KOKURIKULUM",
