@@ -159,8 +159,8 @@ const Api = (() => {
     switch (action) {
       // ---- Log masuk & Superadmin ----
       case "login": {
-        if (payload.username !== "Admin" || payload.password !== DUMMY.settings.LOGIN_PASSWORD) {
-          throw new Error("Nama pengguna atau kata laluan tidak sah.");
+        if (payload.password !== DUMMY.settings.LOGIN_PASSWORD) {
+          throw new Error("Kata laluan tidak sah.");
         }
         return { name: "Admin", role: "ADMIN" };
       }
@@ -344,7 +344,7 @@ const Api = (() => {
   }
 
   return {
-    login: (username, password) => request("login", { username, password }, "POST"),
+    login: (password) => request("login", { password }, "POST"),
     verifySuperadmin: (password) => request("verifySuperadmin", { password }, "POST"),
     updateSettings: (data) => request("updateSettings", data, "POST"),
 
