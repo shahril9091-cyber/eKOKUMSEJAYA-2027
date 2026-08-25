@@ -15,8 +15,8 @@
 const Auth = (() => {
   const SESSION_KEY = "kokurikulum_session";
 
-  async function login(username, password) {
-    const user = await Api.login(username, password);
+  async function login(password) {
+    const user = await Api.login(password);
     localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     return user;
   }
