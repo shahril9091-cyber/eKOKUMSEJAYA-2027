@@ -42,6 +42,7 @@ const Units = (() => {
             <tbody id="unit-tbody"></tbody>
           </table>
         </div>
+        <div class="card-row-list" id="unit-cardlist"></div>
       </div>
     `;
     document.getElementById("unit-new").addEventListener("click", () => openForm());
@@ -94,6 +95,19 @@ const Units = (() => {
         </td>
       </tr>
     `).join("") : `<tr><td colspan="6">${UI.emptyState("fa-people-group", "Tiada rekod ditemui", "Sila tambah rekod baharu untuk memulakan pengurusan kokurikulum.")}</td></tr>`;
+
+    document.getElementById("unit-cardlist").innerHTML = filtered.length ? filtered.map((u) => `
+      <div class="cr-item">
+        <div class="cr-top"><span class="cr-title">${u.unit_name}</span><span class="badge badge-${catTone[u.category]}">${catLabel[u.category]}</span></div>
+        <div class="cr-line"><span>Guru Penasihat</span><span>${u.teacher || "-"}</span></div>
+        <div class="cr-line"><span>Jumlah Ahli</span><span>${u.members || 0}</span></div>
+        <div class="cr-line"><span>Kehadiran</span><span>${u.attendance || 0}%</span></div>
+        <div class="cr-actions">
+          <button class="btn btn-sm btn-outline" data-id="${u.unit_id}" data-act="edit">Edit</button>
+          <button class="btn btn-sm btn-danger" data-id="${u.unit_id}" data-act="delete">Padam</button>
+        </div>
+      </div>
+    `).join("") : "";
 
     document.querySelectorAll("#sa-panel-unit [data-act]").forEach((btn) => {
       btn.addEventListener("click", () => {
