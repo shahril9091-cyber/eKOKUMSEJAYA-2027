@@ -183,7 +183,12 @@ const Api = (() => {
       case "getStudents": return structuredClone(DUMMY.students);
       case "getTeachers": return structuredClone(DUMMY.teachers);
       case "getUnits": return structuredClone(DUMMY.units);
-      case "getAttendance": return structuredClone(DUMMY.attendance);
+      case "getAttendance": {
+        let rows = structuredClone(DUMMY.attendance);
+        if (payload && payload.unit_id) rows = rows.filter((r) => r.unit_id === payload.unit_id || r.unit === payload.unit_id);
+        if (payload && payload.minggu) rows = rows.filter((r) => String(r.minggu) === String(payload.minggu));
+        return rows;
+      }
       case "getReports": return structuredClone(DUMMY.reports);
       case "getErph": return structuredClone(DUMMY.erph);
       case "getErphByUnitWeek": {

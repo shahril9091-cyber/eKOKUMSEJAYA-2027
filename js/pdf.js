@@ -55,7 +55,7 @@ const PdfGenerator = (() => {
       <div class="pdf-scale" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px 24px; font-size:12.5px; border-top:2px solid #0b1f3a; border-bottom:1px solid #dfe3ea; padding:10px 0; margin-bottom:12px;">
         <div><strong>Tarikh:</strong> ${report.date || "-"}</div>
         <div><strong>Hari:</strong> ${report.day || "-"}</div>
-        <div><strong>Masa:</strong> ${report.time || "-"}</div>
+        <div><strong>Masa:</strong> ${(report.time_start || "-") + " - " + (report.time_end || "-")}</div>
         <div><strong>Tempat:</strong> ${report.venue || "-"}</div>
         <div><strong>Kategori:</strong> ${report.category || "-"}</div>
         <div><strong>Unit:</strong> ${report.unit || "-"}</div>
@@ -165,7 +165,7 @@ const PdfGenerator = (() => {
         <div style="font-size:14px; font-weight:700; margin-top:8px;">RANCANGAN PENGAJARAN HARIAN (eRPH) KOKURIKULUM</div>
       </div>
       <table style="width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:16px;">
-        ${erphRow_("Tarikh", erph.date)}${erphRow_("Hari", erph.day)}${erphRow_("Masa", erph.time)}
+        ${erphRow_("Tarikh", erph.date)}${erphRow_("Hari", erph.day)}${erphRow_("Masa", (erph.time_start || "-") + " - " + (erph.time_end || "-"))}
         ${erphRow_("Unit", erph.unit)}${erphRow_("Guru Pembimbing", erph.teacher)}
       </table>
       ${erphBlock_("Tajuk / Aktiviti", erph.topic)}

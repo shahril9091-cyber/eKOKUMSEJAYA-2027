@@ -33,7 +33,12 @@ const Reports = (() => {
 
   function teacherName_(teacherId) {
     const t = teachers.find((x) => x.teacher_id === teacherId);
-    return t ? t.name : "";
+    return t ? t.name : "-";
+  }
+
+  function unitName_(unitId) {
+    const u = units.find((x) => x.unit_id === unitId);
+    return u ? u.unit_name : "-";
   }
 
   function template() {
@@ -74,7 +79,7 @@ const Reports = (() => {
     const search = (document.getElementById("rep-search")?.value || "").toLowerCase();
     const filtered = reports.filter((r) =>
       (!catFilter || r.category === catFilter) &&
-      (!search || r.title.toLowerCase().includes(search) || r.unit.toLowerCase().includes(search))
+      (!search || r.title.toLowerCase().includes(search) || unitName_(r.unit_id).toLowerCase().includes(search))
     );
     const tbody = document.getElementById("rep-tbody");
     const cardlist = document.getElementById("rep-cardlist");
@@ -88,10 +93,10 @@ const Reports = (() => {
     tbody.innerHTML = filtered.map((r) => `
       <tr>
         <td>${r.date}</td>
-        <td>${r.unit}</td>
+        <td>${unitName_(r.unit_id)}</td>
         <td>${r.title}</td>
         <td>${r.present}/${r.total}</td>
-        <td>${r.teacher || teacherName_(r.teacher_id)}</td>
+        <td>${teacherName_(r.teacher_id)}</td>
         <td>${UI.badge(r.status)}</td>
         <td class="row-actions">
           <button class="btn btn-icon btn-outline" data-act="view" data-id="${r.report_id}" title="Lihat"><i class="fa-solid fa-eye"></i></button>
@@ -106,7 +111,7 @@ const Reports = (() => {
       <div class="cr-item">
         <div class="cr-top"><span class="cr-title">${r.title}</span>${UI.badge(r.status)}</div>
         <div class="cr-line"><span>Tarikh</span><span>${r.date}</span></div>
-        <div class="cr-line"><span>Unit</span><span>${r.unit}</span></div>
+        <div class="cr-line"><span>Unit</span><span>${unitName_(r.unit_id)}</span></div>
         <div class="cr-line"><span>Kehadiran</span><span>${r.present}/${r.total}</span></div>
         <div class="cr-actions">
           <button class="btn btn-sm btn-outline" data-act="view" data-id="${r.report_id}">Lihat</button>
@@ -145,7 +150,7 @@ const Reports = (() => {
   function openForm(rec = {}, readOnly = false) {
     const isEdit = !!rec.report_id;
     selectedImages = [null, null, null, null];
-    const unitOptions = units.map((u) => `<option value="${u.unit_id}" ${rec.unit === u.unit_name ? "selected" : ""}>${u.unit_name}</option>`).join("");
+    const unitOptions = units.map((u) => `<option value="${u.unit_id}" ${rec.unit_id === u.unit_id ? "selected" : ""}>${u.unit_name}</option>`).join("");
     const teacherOptions = teachers.map((t) => `<option value="${t.teacher_id}" ${rec.teacher_id === t.teacher_id ? "selected" : ""}>${t.name}</option>`).join("");
     const mingguOptions = Array.from({ length: 12 }, (_, i) => i + 1)
       .map((m) => `<option value="${m}" ${String(rec.minggu) === String(m) ? "selected" : ""}>Minggu ${m}</option>`).join("");
@@ -171,7 +176,8 @@ const Reports = (() => {
             <div class="form-field"><label>Minggu</label>
               <select class="input" id="rep-minggu" ${readOnly ? "disabled" : ""}><option value="">Pilih Minggu</option>${mingguOptions}</select>
             </div>
-            <div class="form-field"><label>Masa</label><input type="time" class="input" id="rep-time" value="${rec.time || ""}" ${readOnly ? "disabled" : ""}></div>
+            <div class="form-field"><label>Masa Mula</label><input type="time" class="input" id="rep-time-start" value="${rec.time_start || ""}" ${readOnly ? "disabled" : ""}></div>
+            <div class="form-field"><label>Masa Tamat</label><input type="time" class="input" id="rep-time-end" value="${rec.time_end || ""}" ${readOnly ? "disabled" : ""}></div>
             <div class="form-field"><label>Tempat</label><input type="text" class="input" id="rep-venue" value="${rec.venue || ""}" ${readOnly ? "disabled" : ""}></div>
             <div class="form-field"><label>Kategori</label>
               <select class="input" id="rep-category" ${readOnly ? "disabled" : ""}>${CONFIG.CATEGORIES.map((c) => `<option value="${c.id}" ${rec.category === c.id ? "selected" : ""}>${c.label}</option>`).join("")}</select>
@@ -305,7 +311,8 @@ const Reports = (() => {
       date: document.getElementById("rep-date").value,
       minggu: document.getElementById("rep-minggu").value,
       day: document.getElementById("rep-day").value,
-      time: document.getElementById("rep-time").value,
+      time_start: document.getElementById("rep-time-start").value,
+      time_end: document.getElementById("rep-time-end").value,
       venue: document.getElementById("rep-venue").value,
       category: document.getElementById("rep-category").value,
       unit_id: unitSelect.value,
@@ -363,7 +370,8 @@ const Reports = (() => {
     }
   }
 
-  async function openPreview(rec) {
+  async function openPreview(rawRec) {
+    const rec = { ...rawRec, unit: unitName_(rawRec.unit_id), teacher: teacherName_(rawRec.teacher_id) };
     let images = [];
     try {
       images = await Api.getImagesByReport(rec.report_id);

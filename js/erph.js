@@ -9,6 +9,10 @@
  * - Minggu (1-12) disertakan supaya Laporan Aktiviti boleh
  *   auto-isi Objektif/Aktiviti/Hasil daripada eRPH unit+minggu
  *   yang sama (lihat reports.js).
+ * - Masa Mula & Masa Tamat (bukan satu medan "Masa" sahaja).
+ * - Nama Unit dipaparkan melalui carian unit_id -> unit_name
+ *   (rekod sebenar daripada API hanya menyimpan unit_id, bukan
+ *   nama terus) — mengelak "undefined" pada jadual/borang.
  * ---------------------------------------------------------
  */
 
@@ -63,7 +67,12 @@ const Erph = (() => {
 
   function teacherName_(teacherId) {
     const t = teachers.find((x) => x.teacher_id === teacherId);
-    return t ? t.name : "";
+    return t ? t.name : "-";
+  }
+
+  function unitName_(unitId) {
+    const u = units.find((x) => x.unit_id === unitId);
+    return u ? u.unit_name : "-";
   }
 
   function renderRows() {
@@ -80,9 +89,9 @@ const Erph = (() => {
       <tr>
         <td>${r.date}</td>
         <td>${r.minggu ? "Minggu " + r.minggu : "-"}</td>
-        <td>${r.unit}</td>
+        <td>${unitName_(r.unit_id)}</td>
         <td>${r.topic}</td>
-        <td>${r.teacher || teacherName_(r.teacher_id)}</td>
+        <td>${teacherName_(r.teacher_id)}</td>
         <td>${UI.badge(r.status)}</td>
         <td class="row-actions">
           <button class="btn btn-icon btn-outline" data-act="edit" data-id="${r.erph_id}" title="Edit"><i class="fa-solid fa-pen"></i></button>
@@ -97,8 +106,8 @@ const Erph = (() => {
       <div class="cr-item">
         <div class="cr-top"><span class="cr-title">${r.topic}</span>${UI.badge(r.status)}</div>
         <div class="cr-line"><span>Tarikh</span><span>${r.date}${r.minggu ? " (Minggu " + r.minggu + ")" : ""}</span></div>
-        <div class="cr-line"><span>Unit</span><span>${r.unit}</span></div>
-        <div class="cr-line"><span>Guru</span><span>${r.teacher || teacherName_(r.teacher_id)}</span></div>
+        <div class="cr-line"><span>Unit</span><span>${unitName_(r.unit_id)}</span></div>
+        <div class="cr-line"><span>Guru</span><span>${teacherName_(r.teacher_id)}</span></div>
         <div class="cr-actions">
           <button class="btn btn-sm btn-outline" data-act="edit" data-id="${r.erph_id}">Edit</button>
           <button class="btn btn-sm btn-outline" data-act="duplicate" data-id="${r.erph_id}">Duplicate</button>
@@ -137,7 +146,7 @@ const Erph = (() => {
   async function handlePdf(rec) {
     UI.toast("Menjana PDF...", "info");
     try {
-      await PdfGenerator.generateErphPdf(rec);
+      await PdfGenerator.generateErphPdf({ ...rec, unit: unitName_(rec.unit_id), teacher: teacherName_(rec.teacher_id) });
       UI.toast("PDF eRPH berjaya dijana.", "success");
     } catch (err) {
       UI.toast("Gagal menjana PDF: " + err.message, "error");
@@ -146,7 +155,7 @@ const Erph = (() => {
 
   function openForm(rec = {}) {
     const isEdit = !!rec.erph_id;
-    const unitOptions = units.map((u) => `<option value="${u.unit_id}" ${rec.unit === u.unit_name ? "selected" : ""}>${u.unit_name}</option>`).join("");
+    const unitOptions = units.map((u) => `<option value="${u.unit_id}" ${rec.unit_id === u.unit_id ? "selected" : ""}>${u.unit_name}</option>`).join("");
     const teacherOptions = teachers.map((t) => `<option value="${t.teacher_id}" ${rec.teacher_id === t.teacher_id ? "selected" : ""}>${t.name}</option>`).join("");
     const mingguOptions = Array.from({ length: 12 }, (_, i) => i + 1)
       .map((m) => `<option value="${m}" ${String(rec.minggu) === String(m) ? "selected" : ""}>Minggu ${m}</option>`).join("");
@@ -161,7 +170,8 @@ const Erph = (() => {
             <div class="form-field"><label>Tarikh</label><input type="date" class="input" id="erph-date" value="${rec.date || ""}"></div>
             <div class="form-field"><label>Hari</label><input type="text" class="input" id="erph-day" placeholder="Auto-isi ikut tarikh" value="${rec.day || ""}" readonly></div>
             <div class="form-field"><label>Minggu</label><select class="input" id="erph-minggu"><option value="">Pilih Minggu</option>${mingguOptions}</select></div>
-            <div class="form-field"><label>Masa</label><input type="time" class="input" id="erph-time" value="${rec.time || ""}"></div>
+            <div class="form-field"><label>Masa Mula</label><input type="time" class="input" id="erph-time-start" value="${rec.time_start || ""}"></div>
+            <div class="form-field"><label>Masa Tamat</label><input type="time" class="input" id="erph-time-end" value="${rec.time_end || ""}"></div>
             <div class="form-field"><label>Kategori</label>
               <select class="input" id="erph-category">${CONFIG.CATEGORIES.map((c) => `<option value="${c.id}" ${rec.category === c.id ? "selected" : ""}>${c.label}</option>`).join("")}</select>
             </div>
@@ -210,7 +220,8 @@ const Erph = (() => {
       date: document.getElementById("erph-date").value,
       day: document.getElementById("erph-day").value,
       minggu: document.getElementById("erph-minggu").value,
-      time: document.getElementById("erph-time").value,
+      time_start: document.getElementById("erph-time-start").value,
+      time_end: document.getElementById("erph-time-end").value,
       category: document.getElementById("erph-category").value,
       unit_id: unitSelect.value,
       teacher_id: document.getElementById("erph-teacher").value,

@@ -4,18 +4,24 @@
  * Modul Kehadiran Murid — tanda kehadiran per unit/tarikh/minggu,
  * dengan fungsi "Hadir Semua".
  *
- * Unit dipilih -> senarai murid ditapis ikut keahlian sebenar
- * (MEMBERS, ditetapkan di Tetapan > Superadmin > Murid), dan
- * dropdown Guru ditapis ikut guru penasihat unit tersebut
- * (ditetapkan di Tetapan > Superadmin > Unit/Kelab/Sukan).
+ * - Kategori dipilih -> dropdown Unit auto-tapis ikut kategori itu.
+ * - Unit dipilih -> senarai murid ditapis ikut keahlian sebenar
+ *   (MEMBERS, ditetapkan di Tetapan > Superadmin > Murid), dan
+ *   dropdown Guru ditapis ikut guru penasihat unit tersebut.
+ * - Unit + Minggu dipilih -> sistem semak jika kehadiran minggu
+ *   itu sudah direkod: jika ADA, paparkan ringkasan (cth 45/48)
+ *   berserta pecahan ikut Tahun, dan PRA-ISI status setiap murid
+ *   supaya guru boleh terus semak/kemas kini rekod sedia ada.
+ *   Jika TIADA, papar amaran jelas "belum lagi diisi".
  * ---------------------------------------------------------
  */
 
 const Attendance = (() => {
-  let units = [];
+  let allUnits = [];
+  let units = [];       // unit tertapis ikut kategori semasa
   let allStudents = [];
   let students = [];
-  let marks = {}; // student_id -> status
+  let marks = {};        // student_id -> status
   let loaded = false;
 
   const STATUS_OPTIONS = [
@@ -29,7 +35,8 @@ const Attendance = (() => {
     const root = document.getElementById("module-attendance");
     if (!loaded) {
       root.innerHTML = `<div class="loading-inline"><div class="spinner spinner-dark"></div>Memuatkan modul kehadiran...</div>`;
-      [units, allStudents] = await Promise.all([Api.getUnits(), Api.getStudents()]);
+      [allUnits, allStudents] = await Promise.all([Api.getUnits(), Api.getStudents()]);
+      units = allUnits;
       loaded = true;
     }
     students = [];
@@ -78,6 +85,8 @@ const Attendance = (() => {
         <button class="btn btn-gold" id="att-mark-all"><i class="fa-solid fa-check-double"></i> Hadir Semua</button>
       </div>
 
+      <div id="att-week-summary"></div>
+
       <div class="card">
         <div class="card-header">
           <h3>Senarai Murid</h3>
@@ -95,13 +104,30 @@ const Attendance = (() => {
   }
 
   function bindEvents() {
+    document.getElementById("att-category").addEventListener("change", handleCategoryChange);
     document.getElementById("att-unit").addEventListener("change", handleUnitChange);
+    document.getElementById("att-minggu").addEventListener("change", checkWeekStatus);
     document.getElementById("att-mark-all").addEventListener("click", () => {
       students.forEach((s) => (marks[s.student_id] = "HADIR"));
       renderList();
       UI.toast("Semua murid ditanda Hadir.", "success");
     });
     document.getElementById("att-save").addEventListener("click", handleSave);
+  }
+
+  // ---- Kategori -> tapis dropdown Unit (seksyen 4 permintaan) ----
+  function handleCategoryChange() {
+    const category = document.getElementById("att-category").value;
+    units = category ? allUnits.filter((u) => u.category === category) : allUnits;
+
+    const unitSelect = document.getElementById("att-unit");
+    unitSelect.innerHTML = `<option value="">Pilih Unit</option>${units.map((u) => `<option value="${u.unit_id}">${u.unit_name}</option>`).join("")}`;
+
+    students = [];
+    marks = {};
+    document.getElementById("att-teacher").innerHTML = `<option value="">Pilih unit dahulu</option>`;
+    document.getElementById("att-week-summary").innerHTML = "";
+    renderList();
   }
 
   async function handleUnitChange() {
@@ -112,6 +138,7 @@ const Attendance = (() => {
     if (!unitId) {
       students = [];
       teacherSelect.innerHTML = `<option value="">Pilih unit dahulu</option>`;
+      document.getElementById("att-week-summary").innerHTML = "";
       renderList();
       return;
     }
@@ -125,12 +152,77 @@ const Attendance = (() => {
     renderList();
 
     // ---- Tapis dropdown Guru ikut guru penasihat unit ini ----
-    const unit = units.find((u) => u.unit_id === unitId);
+    const unit = allUnits.find((u) => u.unit_id === unitId);
     const teacherNames = unit && unit.teacher ? unit.teacher.split(",").map((t) => t.trim()).filter(Boolean) : [];
     if (teacherNames.length) {
       teacherSelect.innerHTML = teacherNames.map((name) => `<option value="${name}">${name}</option>`).join("");
     } else {
       teacherSelect.innerHTML = `<option value="">Tiada guru penasihat ditetapkan</option>`;
+    }
+
+    checkWeekStatus();
+  }
+
+  // ---- Unit + Minggu -> semak rekod sedia ada, papar ringkasan, pra-isi status ----
+  async function checkWeekStatus() {
+    const unitId = document.getElementById("att-unit").value;
+    const minggu = document.getElementById("att-minggu").value;
+    const summaryEl = document.getElementById("att-week-summary");
+
+    if (!unitId || !minggu) {
+      summaryEl.innerHTML = "";
+      return;
+    }
+
+    summaryEl.innerHTML = `<div class="loading-inline" style="padding:12px 0;"><div class="spinner spinner-dark"></div>Menyemak rekod Minggu ${minggu}...</div>`;
+
+    try {
+      const records = await Api.getAttendance({ unit_id: unitId, minggu });
+
+      if (!records.length) {
+        summaryEl.innerHTML = `
+          <div class="card" style="margin-bottom:16px; border-color:var(--warning-100); background:var(--warning-100);">
+            <div class="card-body" style="padding:12px 16px; display:flex; align-items:center; gap:10px;">
+              <i class="fa-solid fa-triangle-exclamation" style="color:var(--warning-600);"></i>
+              <span style="font-size:13px; color:var(--warning-600); font-weight:600;">Kehadiran Minggu ${minggu} untuk unit ini belum lagi diisi.</span>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // Pra-isi status murid daripada rekod sedia ada supaya guru boleh semak/kemas kini
+      records.forEach((r) => { marks[r.murid_id] = r.status; });
+      renderList();
+
+      const total = records.length;
+      const present = records.filter((r) => r.status === "HADIR").length;
+
+      const byYear = {};
+      records.forEach((r) => {
+        const match = String(r.kelas || "").match(/^(\d+)/);
+        const tahun = match ? "Tahun " + match[1] : "Tidak Diketahui";
+        if (!byYear[tahun]) byYear[tahun] = { total: 0, present: 0 };
+        byYear[tahun].total += 1;
+        if (r.status === "HADIR") byYear[tahun].present += 1;
+      });
+      const yearBadges = Object.keys(byYear).sort().map((tahun) =>
+        `<span class="badge badge-info" style="margin-right:6px;">${tahun}: ${byYear[tahun].present}/${byYear[tahun].total}</span>`
+      ).join("");
+
+      summaryEl.innerHTML = `
+        <div class="card" style="margin-bottom:16px; border-color:var(--success-100); background:var(--success-100);">
+          <div class="card-body" style="padding:12px 16px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:${yearBadges ? "8px" : "0"};">
+              <i class="fa-solid fa-circle-check" style="color:var(--success-600);"></i>
+              <span style="font-size:13px; color:var(--success-600); font-weight:700;">Kehadiran Minggu ${minggu} telah direkod: ${present}/${total} hadir</span>
+            </div>
+            ${yearBadges ? `<div>${yearBadges}</div>` : ""}
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      summaryEl.innerHTML = `<div class="hint" style="color:var(--danger-600); margin-bottom:12px;">Gagal menyemak rekod minggu: ${err.message}</div>`;
     }
   }
 
@@ -172,6 +264,7 @@ const Attendance = (() => {
     try {
       await Api.saveAttendance({ date, minggu, unit_id: unitId, kategori: category, guru: teacher, records });
       UI.toast("Kehadiran berjaya disimpan.", "success");
+      checkWeekStatus();
     } catch (err) {
       UI.toast("Gagal menyimpan kehadiran: " + err.message, "error");
     } finally {
