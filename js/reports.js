@@ -31,8 +31,7 @@ const Reports = (() => {
     renderRows();
   }
 
-  function teacherName_(teacherIdsStr) {
-    const ids = String(teacherIdsStr || "").split(",").map((s) => s.trim()).filter(Boolean);
+  function teacherName_(teacherIdsStr) {    const ids = String(teacherIdsStr || "").split(",").map((s) => s.trim()).filter(Boolean);
     const names = ids.map((id) => (teachers.find((x) => x.teacher_id === id) || {}).name).filter(Boolean);
     return names.length ? names.join(", ") : "-";
   }
@@ -40,6 +39,28 @@ const Reports = (() => {
   function unitName_(unitId) {
     const u = units.find((x) => x.unit_id === unitId);
     return u ? u.unit_name : "-";
+  }
+
+  // Guru Penasihat yang boleh dipilih ditapis ikut guru yang telah
+  // ditetapkan sebagai penasihat unit tersebut (Tetapan > Superadmin >
+  // Unit/Kelab/Sukan) — bukan senarai SEMUA guru dalam sistem.
+  function teacherChecklistHtml_(unitId, selectedIds) {
+    const unit = units.find((u) => u.unit_id === unitId);
+    const allowedIds = unit && Array.isArray(unit.teacher_ids) ? unit.teacher_ids : [];
+    const eligibleTeachers = teachers.filter((t) => allowedIds.includes(t.teacher_id));
+
+    if (!unitId) {
+      return `<span class="hint">Sila pilih Unit dahulu untuk memaparkan guru penasihat berdaftar.</span>`;
+    }
+    if (!eligibleTeachers.length) {
+      return `<span class="hint">Tiada guru penasihat ditetapkan untuk unit ini. Tetapkan di Tetapan > Superadmin > Unit/Kelab/Sukan.</span>`;
+    }
+    return eligibleTeachers.map((t) => `
+      <label style="display:flex; align-items:center; gap:8px; padding:5px 0; font-size:13px; cursor:pointer;">
+        <input type="checkbox" class="rep-teacher-check" value="${t.teacher_id}" ${selectedIds.includes(t.teacher_id) ? "checked" : ""}>
+        ${t.name}
+      </label>
+    `).join("");
   }
 
   function template() {
@@ -153,12 +174,6 @@ const Reports = (() => {
     selectedImages = [null, null, null, null];
     const unitOptions = units.map((u) => `<option value="${u.unit_id}" ${rec.unit_id === u.unit_id ? "selected" : ""}>${u.unit_name}</option>`).join("");
     const currentTeacherIds = String(rec.teacher_ids || "").split(",").map((s) => s.trim()).filter(Boolean);
-    const teacherCheckboxes = teachers.map((t) => `
-      <label style="display:flex; align-items:center; gap:8px; padding:5px 0; font-size:13px; cursor:pointer;">
-        <input type="checkbox" class="rep-teacher-check" value="${t.teacher_id}" ${currentTeacherIds.includes(t.teacher_id) ? "checked" : ""}>
-        ${t.name}
-      </label>
-    `).join("");
     const mingguOptions = Array.from({ length: 12 }, (_, i) => i + 1)
       .map((m) => `<option value="${m}" ${String(rec.minggu) === String(m) ? "selected" : ""}>Minggu ${m}</option>`).join("");
     const imageSlots = CAPTIONS.map((cap, i) => `
@@ -192,8 +207,8 @@ const Reports = (() => {
             <div class="form-field"><label>Unit</label><select class="input" id="rep-unit" ${readOnly ? "disabled" : ""}>${unitOptions}</select></div>
             <div class="form-field span-2">
               <label>Guru Penasihat (boleh pilih lebih daripada seorang)</label>
-              <div style="max-height:160px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px;">
-                ${teacherCheckboxes || `<span class="hint">Tiada guru dalam sistem lagi.</span>`}
+              <div id="rep-teacher-checklist" style="max-height:160px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px;">
+                ${teacherChecklistHtml_(rec.unit_id, currentTeacherIds)}
               </div>
             </div>
             <div class="form-field"><label>Bilangan Murid</label><input type="number" class="input" id="rep-total" value="${rec.total_students || ""}" ${readOnly ? "disabled" : ""}></div>
@@ -238,6 +253,11 @@ const Reports = (() => {
       // Unit + Minggu -> auto-isi daripada Kehadiran & eRPH
       document.getElementById("rep-unit").addEventListener("change", handleAutoFillTrigger);
       document.getElementById("rep-minggu").addEventListener("change", handleAutoFillTrigger);
+
+      // Unit dipilih -> tapis semula senarai Guru Penasihat ikut unit tersebut
+      document.getElementById("rep-unit").addEventListener("change", (e) => {
+        document.getElementById("rep-teacher-checklist").innerHTML = teacherChecklistHtml_(e.target.value, []);
+      });
 
       document.getElementById("rep-save-btn").addEventListener("click", () => handleSave(rec, isEdit));
     }

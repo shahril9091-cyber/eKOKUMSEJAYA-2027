@@ -47,9 +47,11 @@ const App = (() => {
     document.getElementById("sidebar-backdrop").addEventListener("click", closeMobileSidebar);
     document.getElementById("logout-btn").addEventListener("click", handleLogout);
 
-    document.getElementById("modal-overlay").addEventListener("click", (e) => {
-      if (e.target.id === "modal-overlay") UI.closeModal();
-    });
+    // Nota: SENGAJA tiada "klik luar tutup borang" di sini. Borang panjang
+    // (Kehadiran, eRPH, Laporan Aktiviti) kerap tertutup sendiri secara
+    // tidak sengaja bila guru terklik ruang kosong sekeliling modal semasa
+    // mengisi — data yang belum disimpan hilang. Borang kini HANYA tertutup
+    // melalui butang "Tutup" / ikon X eksplisit.
 
     startClock();
   }

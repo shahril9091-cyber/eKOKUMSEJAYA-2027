@@ -76,6 +76,28 @@ const Erph = (() => {
     return u ? u.unit_name : "-";
   }
 
+  // Guru Pembimbing yang boleh dipilih ditapis ikut guru yang telah
+  // ditetapkan sebagai penasihat unit tersebut (Tetapan > Superadmin >
+  // Unit/Kelab/Sukan) — bukan senarai SEMUA guru dalam sistem.
+  function teacherChecklistHtml_(unitId, selectedIds) {
+    const unit = units.find((u) => u.unit_id === unitId);
+    const allowedIds = unit && Array.isArray(unit.teacher_ids) ? unit.teacher_ids : [];
+    const eligibleTeachers = teachers.filter((t) => allowedIds.includes(t.teacher_id));
+
+    if (!unitId) {
+      return `<span class="hint">Sila pilih Unit dahulu untuk memaparkan guru pembimbing berdaftar.</span>`;
+    }
+    if (!eligibleTeachers.length) {
+      return `<span class="hint">Tiada guru penasihat ditetapkan untuk unit ini. Tetapkan di Tetapan > Superadmin > Unit/Kelab/Sukan.</span>`;
+    }
+    return eligibleTeachers.map((t) => `
+      <label style="display:flex; align-items:center; gap:8px; padding:5px 0; font-size:13px; cursor:pointer;">
+        <input type="checkbox" class="erph-teacher-check" value="${t.teacher_id}" ${selectedIds.includes(t.teacher_id) ? "checked" : ""}>
+        ${t.name}
+      </label>
+    `).join("");
+  }
+
   function renderRows() {
     const tbody = document.getElementById("erph-tbody");
     const cardlist = document.getElementById("erph-cardlist");
@@ -158,12 +180,7 @@ const Erph = (() => {
     const isEdit = !!rec.erph_id;
     const unitOptions = units.map((u) => `<option value="${u.unit_id}" ${rec.unit_id === u.unit_id ? "selected" : ""}>${u.unit_name}</option>`).join("");
     const currentTeacherIds = String(rec.teacher_ids || "").split(",").map((s) => s.trim()).filter(Boolean);
-    const teacherCheckboxes = teachers.map((t) => `
-      <label style="display:flex; align-items:center; gap:8px; padding:5px 0; font-size:13px; cursor:pointer;">
-        <input type="checkbox" class="erph-teacher-check" value="${t.teacher_id}" ${currentTeacherIds.includes(t.teacher_id) ? "checked" : ""}>
-        ${t.name}
-      </label>
-    `).join("");    const mingguOptions = Array.from({ length: 12 }, (_, i) => i + 1)
+    const mingguOptions = Array.from({ length: 12 }, (_, i) => i + 1)
       .map((m) => `<option value="${m}" ${String(rec.minggu) === String(m) ? "selected" : ""}>Minggu ${m}</option>`).join("");
 
     UI.openModal({
@@ -184,8 +201,8 @@ const Erph = (() => {
             <div class="form-field"><label>Unit</label><select class="input" id="erph-unit">${unitOptions}</select></div>
             <div class="form-field span-2">
               <label>Guru Pembimbing (boleh pilih lebih daripada seorang)</label>
-              <div style="max-height:160px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px;">
-                ${teacherCheckboxes || `<span class="hint">Tiada guru dalam sistem lagi.</span>`}
+              <div id="erph-teacher-checklist" style="max-height:160px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px;">
+                ${teacherChecklistHtml_(rec.unit_id, currentTeacherIds)}
               </div>
             </div>
           </div>
@@ -213,6 +230,11 @@ const Erph = (() => {
       const [y, m, d] = e.target.value.split("-").map(Number);
       const dateObj = new Date(y, m - 1, d);
       document.getElementById("erph-day").value = HARI_MS[dateObj.getDay()];
+    });
+
+    // Unit dipilih -> tapis semula senarai Guru Pembimbing ikut unit tersebut
+    document.getElementById("erph-unit").addEventListener("change", (e) => {
+      document.getElementById("erph-teacher-checklist").innerHTML = teacherChecklistHtml_(e.target.value, []);
     });
     // Auto-isi serta-merta jika tarikh sudah ada (rekod edit) tetapi Hari masih kosong
     if (rec.date && !rec.day) {
