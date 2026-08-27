@@ -77,12 +77,12 @@ const PdfGenerator = (() => {
 
       <div class="pdf-scale" style="display:grid; grid-template-columns:1fr 1fr; gap:30px; font-size:11.5px; margin-top:auto;">
         <div style="text-align:center;">
-          <div style="margin-bottom:30px;">Disediakan oleh:</div>
-          <div style="border-top:1px solid #101826; padding-top:4px;">${report.teacher || "................................"}<br><span style="color:#4b5768;">Guru Penasihat</span></div>
+          <div style="margin-bottom:30px;">Disediakan&nbsp;oleh:</div>
+          <div style="border-top:1px solid #101826; padding-top:4px;">${report.teacher || "................................"}<br><span style="color:#4b5768;">Guru&nbsp;Penasihat</span></div>
         </div>
         <div style="text-align:center;">
-          <div style="margin-bottom:30px;">Disahkan oleh:</div>
-          <div style="border-top:1px solid #101826; padding-top:4px;">................................<br><span style="color:#4b5768;">Penyelaras Kokurikulum, SK Seri Jaya</span></div>
+          <div style="margin-bottom:30px;">Disahkan&nbsp;oleh:</div>
+          <div style="border-top:1px solid #101826; padding-top:4px;">................................<br><span style="color:#4b5768;">Penyelaras&nbsp;Kokurikulum,&nbsp;SK&nbsp;Seri&nbsp;Jaya</span></div>
         </div>
       </div>
     `;
@@ -132,6 +132,13 @@ const PdfGenerator = (() => {
     shrinkToFit_(container, REPORT_PAGE_H_PX);
 
     try {
+      // Tunggu fon (Google Fonts) siap dimuat sepenuhnya sebelum tangkap gambar —
+      // tanpa ini, html2canvas kadang guna fon ganti (fallback) dengan metrik
+      // berbeza, menyebabkan jarak antara perkataan "hilang" pada teks pendek
+      // (cth "Disediakan oleh" jadi "Disediakanoleh") walaupun kod sumber betul.
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch (e) { /* teruskan walaupun gagal */ }
+      }
       const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -168,7 +175,7 @@ const PdfGenerator = (() => {
       </div>
       <table style="width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:16px;">
         ${erphRow_("Tarikh", erph.date)}${erphRow_("Hari", erph.day)}${erphRow_("Masa", (erph.time_start || "-") + " - " + (erph.time_end || "-"))}
-        ${erphRow_("Unit", erph.unit)}${erphRow_("Guru Pembimbing", erph.teacher)}
+        ${erphRow_("Unit", erph.unit)}${erphRow_("Guru&nbsp;Pembimbing", erph.teacher)}
       </table>
       ${erphBlock_("Tajuk / Aktiviti", erph.topic)}
       ${erphBlock_("Objektif", erph.objective)}
@@ -195,6 +202,13 @@ const PdfGenerator = (() => {
     }
     const container = buildErphContainer_(erph);
     try {
+      // Tunggu fon (Google Fonts) siap dimuat sepenuhnya sebelum tangkap gambar —
+      // tanpa ini, html2canvas kadang guna fon ganti (fallback) dengan metrik
+      // berbeza, menyebabkan jarak antara perkataan "hilang" pada teks pendek
+      // (cth "Disediakan oleh" jadi "Disediakanoleh") walaupun kod sumber betul.
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch (e) { /* teruskan walaupun gagal */ }
+      }
       const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -298,12 +312,12 @@ const PdfGenerator = (() => {
       <div style="margin-top:12px; font-size:10.5px; color:#4b5768;">Petunjuk: ✓ Hadir &nbsp; ✕ Tidak Hadir &nbsp; L Lewat &nbsp; B Bersebab &nbsp; - Tiada rekod</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:30px; font-size:11.5px; margin-top:36px; max-width:520px;">
         <div style="text-align:center;">
-          <div style="margin-bottom:26px;">Disediakan oleh:</div>
-          <div style="border-top:1px solid #101826; padding-top:4px;">................................<br><span style="color:#4b5768;">Guru Penasihat</span></div>
+          <div style="margin-bottom:26px;">Disediakan&nbsp;oleh:</div>
+          <div style="border-top:1px solid #101826; padding-top:4px;">................................<br><span style="color:#4b5768;">Guru&nbsp;Penasihat</span></div>
         </div>
         <div style="text-align:center;">
-          <div style="margin-bottom:26px;">Disahkan oleh:</div>
-          <div style="border-top:1px solid #101826; padding-top:4px;">................................<br><span style="color:#4b5768;">Penyelaras Kokurikulum</span></div>
+          <div style="margin-bottom:26px;">Disahkan&nbsp;oleh:</div>
+          <div style="border-top:1px solid #101826; padding-top:4px;">................................<br><span style="color:#4b5768;">Penyelaras&nbsp;Kokurikulum</span></div>
         </div>
       </div>
     `;
@@ -317,6 +331,13 @@ const PdfGenerator = (() => {
     }
     const container = buildAnalysisContainer_(unitName, weeks, weekDates, rows);
     try {
+      // Tunggu fon (Google Fonts) siap dimuat sepenuhnya sebelum tangkap gambar —
+      // tanpa ini, html2canvas kadang guna fon ganti (fallback) dengan metrik
+      // berbeza, menyebabkan jarak antara perkataan "hilang" pada teks pendek
+      // (cth "Disediakan oleh" jadi "Disediakanoleh") walaupun kod sumber betul.
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch (e) { /* teruskan walaupun gagal */ }
+      }
       const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
